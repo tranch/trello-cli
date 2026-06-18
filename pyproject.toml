@@ -5,16 +5,32 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "trello-cli"
 version = "0.1.0"
+authors = [
+  { name = "tranch", email = "tranch.xiao@gmail.com" },
+]
 description = "LLM-friendly command-line interface for Trello."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
-authors = [
-  { name = "tranch" },
-]
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = [
   "requests>=2.31",
   "typer>=0.12",
+]
+
+keywords = ["trello", "cli", "llm", "automation"]
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Utilities",
 ]
 
 [project.optional-dependencies]
@@ -30,3 +46,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[project.urls]
+Homepage = "https://github.com/tranch/trello-cli"
+Issues = "https://github.com/tranch/trello-cli/issues"
