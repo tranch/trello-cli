@@ -42,6 +42,7 @@ trello-cli list-boards
 trello-cli list-lists --board-id <id>
 trello-cli list-cards --list-id <id>
 trello-cli get-card --card-id <id>
+trello-cli get-card-by-short-id --board-id <board-id> --short-id 413
 trello-cli create-card --list-id <id> --name "Task title" --desc "Details"
 trello-cli update-card --card-id <id> --name "New title"
 trello-cli update-card --card-id <id> --due 2025-12-31T09:00:00.000Z

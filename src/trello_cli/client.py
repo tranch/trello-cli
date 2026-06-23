@@ -71,16 +71,33 @@ class TrelloClient:
         cards = self._get(
             f"/lists/{list_id}/cards",
             filter="open",
-            fields="id,name,desc,due,url,idList,labels",
+            fields="id,idShort,name,desc,due,url,idList,labels",
         )
         return [self._fmt(card) for card in cards]
 
     def get_card(self, card_id: str) -> dict:
         card = self._get(
             f"/cards/{card_id}",
-            fields="id,name,desc,due,url,idList,idBoard,labels,closed",
+            fields="id,idShort,name,desc,due,url,idList,idBoard,labels,closed",
         )
         return self._fmt(card)
+
+    def get_card_by_short_id(self, board_id: str, short_id: int) -> dict:
+        """Return a card by its board-scoped Trello ``idShort`` value."""
+        cards = self._get(
+            f"/boards/{board_id}/cards",
+            filter="all",
+            fields="id,idShort",
+        )
+        card_id = next(
+            (card["id"] for card in cards if card.get("idShort") == short_id),
+            None,
+        )
+        if card_id is None:
+            raise TrelloError(
+                f"Card short ID {short_id} was not found on board {board_id}."
+            )
+        return self.get_card(card_id)
 
     def create_card(
         self,
@@ -159,6 +176,7 @@ class TrelloClient:
     def _fmt(card: dict) -> dict:
         return {
             "id": card.get("id"),
+            "short_id": card.get("idShort"),
             "name": card.get("name"),
             "desc": card.get("desc", ""),
             "due": card.get("due"),

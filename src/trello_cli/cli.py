@@ -130,6 +130,23 @@ def get_card(
         _fail(str(exc))
 
 
+@app.command("get-card-by-short-id")
+def get_card_by_short_id(
+    board_id: str = typer.Option(..., "--board-id", help="Trello board ID."),
+    short_id: int = typer.Option(
+        ...,
+        "--short-id",
+        min=1,
+        help="Board-scoped card number shown in a Trello card URL.",
+    ),
+) -> None:
+    """Get a card by the board-scoped number shown in its Trello URL."""
+    try:
+        _print(_client().get_card_by_short_id(board_id=board_id, short_id=short_id))
+    except TrelloError as exc:
+        _fail(str(exc))
+
+
 @app.command("create-card")
 def create_card(
     list_id: str = typer.Option(..., "--list-id", help="Target list ID."),
