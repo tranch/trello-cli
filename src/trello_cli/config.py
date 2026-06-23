@@ -19,13 +19,20 @@ def load_config_file(config_path: Path = CONFIG_PATH) -> dict[str, str]:
     return {
         "api_key": section.get("api_key", ""),
         "token": section.get("token", ""),
+        "default_board": section.get("default_board", ""),
     }
 
 
-def write_config(api_key: str, token: str, config_path: Path = CONFIG_PATH) -> None:
+def write_config(
+    api_key: str,
+    token: str,
+    config_path: Path = CONFIG_PATH,
+    default_board: str = "",
+) -> None:
     config_path.parent.mkdir(parents=True, exist_ok=True)
+    board_line = f'\ndefault_board = "{default_board}"' if default_board else ""
     config_path.write_text(
-        f'[trello]\napi_key = "{api_key}"\ntoken   = "{token}"\n',
+        f'[trello]\napi_key = "{api_key}"\ntoken   = "{token}"{board_line}\n',
         encoding="utf-8",
     )
     config_path.chmod(0o600)

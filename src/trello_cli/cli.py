@@ -5,7 +5,7 @@ from pathlib import Path
 import typer
 
 from .client import TrelloClient, TrelloError
-from .config import CONFIG_PATH, write_config
+from .config import CONFIG_PATH, load_config_file, write_config
 
 app = typer.Typer(
     help="LLM-friendly Trello CLI. All output is JSON.",
@@ -33,6 +33,17 @@ def _client() -> TrelloClient:
         _fail(str(exc))
 
 
+def _resolve_board(board_id: str | None) -> str:
+    """Return the explicit board_id or fall back to the configured default."""
+    if board_id:
+        return board_id
+    cfg = load_config_file()
+    default = cfg.get("default_board", "")
+    if not default:
+        _fail("No board specified and no default_board configured.")
+    return default
+
+
 def _init(
     api_key: str = typer.Option(
         ...,
@@ -47,9 +58,14 @@ def _init(
         hide_input=True,
         help="Your Trello OAuth token.",
     ),
+    default_board: str = typer.Option(
+        "",
+        "--default-board",
+        help="Default board ID to use when --board-id is omitted.",
+    ),
 ) -> None:
     """Write credentials to ~/.config/trello-cli/config.toml."""
-    write_config(api_key=api_key, token=token)
+    write_config(api_key=api_key, token=token, default_board=default_board)
     typer.echo(f"Config written to {CONFIG_PATH}")
 
 
@@ -65,6 +81,11 @@ def auth(
         "never",
         "--expiration",
         help="Token expiration: never / 30days / 1day.",
+    ),
+    default_board: str = typer.Option(
+        "",
+        "--default-board",
+        help="Default board ID to use when --board-id is omitted.",
     ),
 ) -> None:
     """Open the Trello authorization URL in your browser to obtain a token."""
@@ -85,7 +106,7 @@ def auth(
     if not token:
         _fail("Token is required.")
 
-    _init(api_key=api_key, token=token)
+    _init(api_key=api_key, token=token, default_board=default_board)
 
 
 @app.command("list-boards")
@@ -99,11 +120,11 @@ def list_boards() -> None:
 
 @app.command("list-lists")
 def list_lists(
-    board_id: str = typer.Option(..., "--board-id", help="Trello board ID."),
+    board_id: str | None = typer.Option(None, "--board-id", help="Trello board ID."),
 ) -> None:
     """List all open lists (columns) in a board."""
     try:
-        _print(_client().list_lists(board_id=board_id))
+        _print(_client().list_lists(board_id=_resolve_board(board_id)))
     except TrelloError as exc:
         _fail(str(exc))
 
@@ -132,7 +153,7 @@ def get_card(
 
 @app.command("get-card-by-short-id")
 def get_card_by_short_id(
-    board_id: str = typer.Option(..., "--board-id", help="Trello board ID."),
+    board_id: str | None = typer.Option(None, "--board-id", help="Trello board ID."),
     short_id: int = typer.Option(
         ...,
         "--short-id",
@@ -142,7 +163,12 @@ def get_card_by_short_id(
 ) -> None:
     """Get a card by the board-scoped number shown in its Trello URL."""
     try:
-        _print(_client().get_card_by_short_id(board_id=board_id, short_id=short_id))
+        _print(
+            _client().get_card_by_short_id(
+                board_id=_resolve_board(board_id),
+                short_id=short_id,
+            )
+        )
     except TrelloError as exc:
         _fail(str(exc))
 
