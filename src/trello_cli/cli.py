@@ -142,33 +142,26 @@ def list_cards(
 
 @app.command("get-card")
 def get_card(
-    card_id: str = typer.Option(..., "--card-id", help="Trello card ID."),
-) -> None:
-    """Get full details of a single card."""
-    try:
-        _print(_client().get_card(card_id=card_id))
-    except TrelloError as exc:
-        _fail(str(exc))
-
-
-@app.command("get-card-by-short-id")
-def get_card_by_short_id(
-    board_id: str | None = typer.Option(None, "--board-id", help="Trello board ID."),
-    short_id: int = typer.Option(
-        ...,
+    card_id: str | None = typer.Option(None, "--card-id", help="Trello card ID."),
+    short_id: int | None = typer.Option(
+        None,
         "--short-id",
         min=1,
         help="Board-scoped card number shown in a Trello card URL.",
     ),
 ) -> None:
-    """Get a card by the board-scoped number shown in its Trello URL."""
+    """Get full details of a single card."""
     try:
-        _print(
-            _client().get_card_by_short_id(
-                board_id=_resolve_board(board_id),
-                short_id=short_id,
-            )
-        )
+        client = _client()
+        if card_id and short_id:
+            _fail("Specify either --card-id or --short-id, not both.")
+        if card_id:
+            _print(client.get_card(card_id=card_id))
+        elif short_id:
+            board_id = _resolve_board(None)
+            _print(client.get_card_by_short_id(board_id=board_id, short_id=short_id))
+        else:
+            _fail("Specify either --card-id or --short-id.")
     except TrelloError as exc:
         _fail(str(exc))
 
