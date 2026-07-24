@@ -47,6 +47,8 @@ trello-cli create-card --list-id <id> --name "Task title" --desc "Details"
 trello-cli update-card --card-id <id> --name "New title"
 trello-cli update-card --card-id <id> --due 2025-12-31T09:00:00.000Z
 trello-cli update-card --card-id <id> --closed
+trello-cli add-comment --card-id <id> --text "Comment text"
+trello-cli add-comment --short-id 413 --text "Comment text"
 trello-cli create-checklist --card-id <id> --name "Checklist"
 trello-cli create-checklist --card-id <id> --name "Todos" --items-file /path/to/items.md
 trello-cli add-checkitem --checklist-id <id> --name "Item text"

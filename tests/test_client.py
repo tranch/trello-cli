@@ -52,3 +52,33 @@ def test_get_card_by_short_id_rejects_missing_card(monkeypatch: pytest.MonkeyPat
 
     with pytest.raises(TrelloError, match="413.*board-1"):
         client.get_card_by_short_id("board-1", 413)
+
+
+def test_add_comment_posts_text_as_query_param(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = object.__new__(TrelloClient)
+    calls: list[tuple[str, dict]] = []
+
+    def post_params(path: str, **params: object) -> object:
+        calls.append((path, params))
+        return {
+            "id": "action-1",
+            "type": "commentCard",
+            "data": {"text": "Looks good"},
+        }
+
+    monkeypatch.setattr(client, "_post_params", post_params)
+
+    assert client.add_comment("card-1", "Looks good")["id"] == "action-1"
+    assert calls == [
+        (
+            "/cards/card-1/actions/comments",
+            {"text": "Looks good"},
+        )
+    ]
+
+
+def test_add_comment_rejects_empty_text() -> None:
+    client = object.__new__(TrelloClient)
+
+    with pytest.raises(ValueError, match="must not be empty"):
+        client.add_comment("card-1", "  ")

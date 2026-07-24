@@ -45,6 +45,16 @@ class TrelloClient:
             raise TrelloError(f"POST {path} -> {response.status_code}: {response.text}")
         return response.json()
 
+    def _post_params(self, path: str, **params: Any) -> Any:
+        response = requests.post(
+            f"{TRELLO_BASE}{path}",
+            params={**self._auth, **params},
+            timeout=15,
+        )
+        if not response.ok:
+            raise TrelloError(f"POST {path} -> {response.status_code}: {response.text}")
+        return response.json()
+
     def _put(self, path: str, **data: Any) -> Any:
         response = requests.put(
             f"{TRELLO_BASE}{path}",
@@ -131,6 +141,11 @@ class TrelloClient:
         if not payload:
             raise ValueError("At least one field must be specified.")
         return self._fmt(self._put(f"/cards/{card_id}", **payload))
+
+    def add_comment(self, card_id: str, text: str) -> dict:
+        if not text.strip():
+            raise ValueError("Comment text must not be empty.")
+        return self._post_params(f"/cards/{card_id}/actions/comments", text=text)
 
     def create_checklist(self, card_id: str, name: str) -> dict:
         return self._post(f"/cards/{card_id}/checklists", name=name)

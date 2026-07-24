@@ -216,6 +216,35 @@ def update_card(
         _fail(str(exc))
 
 
+@app.command("add-comment")
+def add_comment(
+    text: str = typer.Option(..., "--text", help="Comment text (Markdown supported)."),
+    card_id: str | None = typer.Option(None, "--card-id", help="Trello card ID."),
+    short_id: int | None = typer.Option(
+        None,
+        "--short-id",
+        min=1,
+        help="Board-scoped card number shown in a Trello card URL.",
+    ),
+) -> None:
+    """Add a comment to a card."""
+    try:
+        client = _client()
+        if card_id and short_id:
+            _fail("Specify either --card-id or --short-id, not both.")
+        if short_id:
+            board_id = _resolve_board(None)
+            card_id = client.get_card_by_short_id(
+                board_id=board_id,
+                short_id=short_id,
+            )["id"]
+        if not card_id:
+            _fail("Specify either --card-id or --short-id.")
+        _print(client.add_comment(card_id=card_id, text=text))
+    except (TrelloError, ValueError) as exc:
+        _fail(str(exc))
+
+
 @app.command("create-checklist")
 def create_checklist(
     card_id: str = typer.Option(..., "--card-id", help="Card ID to add the checklist to."),
