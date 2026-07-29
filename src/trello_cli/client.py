@@ -66,6 +66,16 @@ class TrelloClient:
             raise TrelloError(f"PUT {path} -> {response.status_code}: {response.text}")
         return response.json()
 
+    def _delete(self, path: str) -> Any:
+        response = requests.delete(
+            f"{TRELLO_BASE}{path}",
+            params=self._auth,
+            timeout=15,
+        )
+        if not response.ok:
+            raise TrelloError(f"DELETE {path} -> {response.status_code}: {response.text}")
+        return response.json() if response.content else {}
+
     def list_boards(self) -> list[dict]:
         boards = self._get("/members/me/boards", fields="id,name,url,closed")
         return [
@@ -150,8 +160,57 @@ class TrelloClient:
     def create_checklist(self, card_id: str, name: str) -> dict:
         return self._post(f"/cards/{card_id}/checklists", name=name)
 
-    def add_checkitem(self, checklist_id: str, name: str) -> dict:
-        return self._post(f"/checklists/{checklist_id}/checkItems", name=name)
+    def get_checklist(self, checklist_id: str) -> dict:
+        return self._get(f"/checklists/{checklist_id}", checkItems="all")
+
+    def update_checklist(
+        self,
+        checklist_id: str,
+        name: str | None = None,
+        pos: str | float | int | None = None,
+    ) -> dict:
+        payload: dict[str, Any] = {}
+        if name is not None:
+            payload["name"] = name
+        if pos is not None:
+            payload["pos"] = pos
+        if not payload:
+            raise ValueError("At least one field must be specified.")
+        return self._put(f"/checklists/{checklist_id}", **payload)
+
+    def delete_checklist(self, checklist_id: str) -> Any:
+        return self._delete(f"/checklists/{checklist_id}")
+
+    def add_checkitem(
+        self,
+        checklist_id: str,
+        name: str,
+        pos: str | float | int | None = None,
+        checked: bool | None = None,
+        due: str | None = None,
+        due_reminder: int | None = None,
+        member_id: str | None = None,
+    ) -> dict:
+        """Add a checklist item.
+
+        ``pos``, ``due``, ``due_reminder``, and ``member_id`` are advanced
+        Trello features and may require a subscription on the target board.
+        """
+        payload: dict[str, Any] = {"name": name}
+        if pos is not None:
+            payload["pos"] = pos
+        if checked is not None:
+            payload["checked"] = checked
+        if due is not None:
+            payload["due"] = due
+        if due_reminder is not None:
+            payload["dueReminder"] = due_reminder
+        if member_id is not None:
+            payload["idMember"] = member_id
+        return self._post(f"/checklists/{checklist_id}/checkItems", **payload)
+
+    def get_checkitem(self, card_id: str, checkitem_id: str) -> dict:
+        return self._get(f"/cards/{card_id}/checkItem/{checkitem_id}")
 
     def update_checkitem(
         self,
@@ -159,15 +218,38 @@ class TrelloClient:
         checkitem_id: str,
         name: str | None = None,
         state: str | None = None,
+        checklist_id: str | None = None,
+        pos: str | float | int | None = None,
+        due: str | None = None,
+        due_reminder: int | None = None,
+        member_id: str | None = None,
     ) -> dict:
+        """Update a checklist item.
+
+        ``pos``, ``due``, ``due_reminder``, and ``member_id`` are advanced
+        Trello features and may require a subscription on the target board.
+        """
         payload: dict[str, Any] = {}
         if name is not None:
             payload["name"] = name
         if state is not None:
             payload["state"] = state
+        if checklist_id is not None:
+            payload["idChecklist"] = checklist_id
+        if pos is not None:
+            payload["pos"] = pos
+        if due is not None:
+            payload["due"] = due
+        if due_reminder is not None:
+            payload["dueReminder"] = due_reminder
+        if member_id is not None:
+            payload["idMember"] = member_id
         if not payload:
             raise ValueError("At least one field must be specified.")
         return self._put(f"/cards/{card_id}/checkItem/{checkitem_id}", **payload)
+
+    def delete_checkitem(self, card_id: str, checkitem_id: str) -> Any:
+        return self._delete(f"/cards/{card_id}/checkItem/{checkitem_id}")
 
     def list_checklists(self, card_id: str) -> list[dict]:
         card = self._get(

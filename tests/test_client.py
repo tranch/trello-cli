@@ -82,3 +82,113 @@ def test_add_comment_rejects_empty_text() -> None:
 
     with pytest.raises(ValueError, match="must not be empty"):
         client.add_comment("card-1", "  ")
+
+
+def test_update_checklist_sends_supported_fields(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = object.__new__(TrelloClient)
+    calls: list[tuple[str, dict]] = []
+
+    def put(path: str, **data: object) -> object:
+        calls.append((path, data))
+        return {"id": "checklist-1", "name": "Updated", "pos": 3}
+
+    monkeypatch.setattr(client, "_put", put)
+
+    result = client.update_checklist("checklist-1", name="Updated", pos=3)
+
+    assert result["name"] == "Updated"
+    assert calls == [("/checklists/checklist-1", {"name": "Updated", "pos": 3})]
+
+
+def test_update_checklist_requires_a_field() -> None:
+    client = object.__new__(TrelloClient)
+
+    with pytest.raises(ValueError, match="At least one field"):
+        client.update_checklist("checklist-1")
+
+
+def test_add_checkitem_maps_optional_fields(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = object.__new__(TrelloClient)
+    calls: list[tuple[str, dict]] = []
+
+    def post(path: str, **data: object) -> object:
+        calls.append((path, data))
+        return {"id": "item-1"}
+
+    monkeypatch.setattr(client, "_post", post)
+
+    client.add_checkitem(
+        "checklist-1",
+        "Item",
+        pos=2,
+        checked=True,
+        due="2026-08-01T09:00:00.000Z",
+        due_reminder=60,
+        member_id="member-1",
+    )
+
+    assert calls == [
+        (
+            "/checklists/checklist-1/checkItems",
+            {
+                "name": "Item",
+                "pos": 2,
+                "checked": True,
+                "due": "2026-08-01T09:00:00.000Z",
+                "dueReminder": 60,
+                "idMember": "member-1",
+            },
+        )
+    ]
+
+
+def test_update_checkitem_maps_all_supported_fields(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = object.__new__(TrelloClient)
+    calls: list[tuple[str, dict]] = []
+
+    def put(path: str, **data: object) -> object:
+        calls.append((path, data))
+        return {"id": "item-1", "state": "complete"}
+
+    monkeypatch.setattr(client, "_put", put)
+
+    client.update_checkitem(
+        "card-1",
+        "item-1",
+        name="Updated",
+        state="complete",
+        checklist_id="checklist-2",
+        pos=4,
+        due="2026-08-01T09:00:00.000Z",
+        due_reminder=60,
+        member_id="member-1",
+    )
+
+    assert calls == [
+        (
+            "/cards/card-1/checkItem/item-1",
+            {
+                "name": "Updated",
+                "state": "complete",
+                "idChecklist": "checklist-2",
+                "pos": 4,
+                "due": "2026-08-01T09:00:00.000Z",
+                "dueReminder": 60,
+                "idMember": "member-1",
+            },
+        )
+    ]
+
+
+def test_delete_checkitem_uses_delete_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = object.__new__(TrelloClient)
+    calls: list[str] = []
+
+    def delete(path: str) -> object:
+        calls.append(path)
+        return {"success": True}
+
+    monkeypatch.setattr(client, "_delete", delete)
+
+    assert client.delete_checkitem("card-1", "item-1") == {"success": True}
+    assert calls == ["/cards/card-1/checkItem/item-1"]

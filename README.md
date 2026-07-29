@@ -51,6 +51,12 @@ trello-cli add-comment --card-id <id> --text "Comment text"
 trello-cli add-comment --short-id 413 --text "Comment text"
 trello-cli create-checklist --card-id <id> --name "Checklist"
 trello-cli create-checklist --card-id <id> --name "Todos" --items-file /path/to/items.md
-trello-cli add-checkitem --checklist-id <id> --name "Item text"
+trello-cli get-checklist --checklist-id <id>
+trello-cli update-checklist --checklist-id <id> --name "Updated checklist"
+trello-cli delete-checklist --checklist-id <id>
+trello-cli add-checkitem --checklist-id <id> --name "Item text" --checked
+trello-cli get-checkitem --card-id <id> --checkitem-id <id>
+trello-cli update-checkitem --card-id <id> --checkitem-id <id> --state complete
+trello-cli delete-checkitem --card-id <id> --checkitem-id <id>
 trello-cli list-checklists --card-id <id>
 ```

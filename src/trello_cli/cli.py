@@ -293,10 +293,123 @@ def create_checklist(
 def add_checkitem(
     checklist_id: str = typer.Option(..., "--checklist-id", help="Checklist ID."),
     name: str = typer.Option(..., "--name", help="Item text."),
+    pos: str | None = typer.Option(None, "--pos", help="Item position."),
+    checked: bool = typer.Option(False, "--checked", help="Create the item as completed."),
+    due: str | None = typer.Option(None, "--due", help="Due date in ISO 8601."),
+    due_reminder: int | None = typer.Option(None, "--due-reminder", help="Due reminder in minutes."),
+    member_id: str | None = typer.Option(None, "--member-id", help="Member ID assigned to the item."),
 ) -> None:
-    """Add a single item to an existing checklist."""
+    """Add a single item to an existing checklist.
+
+    Position, due date, due reminder, and member assignment are advanced
+    Trello features and may require a subscription on the target board.
+    """
     try:
-        _print(_client().add_checkitem(checklist_id=checklist_id, name=name))
+        _print(
+            _client().add_checkitem(
+                checklist_id=checklist_id,
+                name=name,
+                pos=pos,
+                checked=checked,
+                due=due,
+                due_reminder=due_reminder,
+                member_id=member_id,
+            )
+        )
+    except (TrelloError, ValueError) as exc:
+        _fail(str(exc))
+
+
+@app.command("get-checklist")
+def get_checklist(
+    checklist_id: str = typer.Option(..., "--checklist-id", help="Checklist ID."),
+) -> None:
+    """Get a checklist and all of its items."""
+    try:
+        _print(_client().get_checklist(checklist_id=checklist_id))
+    except TrelloError as exc:
+        _fail(str(exc))
+
+
+@app.command("update-checklist")
+def update_checklist(
+    checklist_id: str = typer.Option(..., "--checklist-id", help="Checklist ID."),
+    name: str | None = typer.Option(None, "--name", help="New checklist title."),
+    pos: str | None = typer.Option(None, "--pos", help="New checklist position."),
+) -> None:
+    """Update one or more fields on an existing checklist."""
+    try:
+        _print(_client().update_checklist(checklist_id=checklist_id, name=name, pos=pos))
+    except (TrelloError, ValueError) as exc:
+        _fail(str(exc))
+
+
+@app.command("delete-checklist")
+def delete_checklist(
+    checklist_id: str = typer.Option(..., "--checklist-id", help="Checklist ID."),
+) -> None:
+    """Delete a checklist."""
+    try:
+        _print(_client().delete_checklist(checklist_id=checklist_id))
+    except TrelloError as exc:
+        _fail(str(exc))
+
+
+@app.command("get-checkitem")
+def get_checkitem(
+    card_id: str = typer.Option(..., "--card-id", help="Card ID."),
+    checkitem_id: str = typer.Option(..., "--checkitem-id", help="Checklist item ID."),
+) -> None:
+    """Get a checklist item on a card."""
+    try:
+        _print(_client().get_checkitem(card_id=card_id, checkitem_id=checkitem_id))
+    except TrelloError as exc:
+        _fail(str(exc))
+
+
+@app.command("update-checkitem")
+def update_checkitem(
+    card_id: str = typer.Option(..., "--card-id", help="Card ID."),
+    checkitem_id: str = typer.Option(..., "--checkitem-id", help="Checklist item ID."),
+    name: str | None = typer.Option(None, "--name", help="New item text."),
+    state: str | None = typer.Option(None, "--state", help="Item state: complete or incomplete."),
+    checklist_id: str | None = typer.Option(None, "--checklist-id", help="Destination checklist ID."),
+    pos: str | None = typer.Option(None, "--pos", help="New item position."),
+    due: str | None = typer.Option(None, "--due", help="Due date in ISO 8601."),
+    due_reminder: int | None = typer.Option(None, "--due-reminder", help="Due reminder in minutes."),
+    member_id: str | None = typer.Option(None, "--member-id", help="Member ID assigned to the item."),
+) -> None:
+    """Update one or more fields on a checklist item.
+
+    Position, due date, due reminder, and member assignment are advanced
+    Trello features and may require a subscription on the target board.
+    """
+    try:
+        _print(
+            _client().update_checkitem(
+                card_id=card_id,
+                checkitem_id=checkitem_id,
+                name=name,
+                state=state,
+                checklist_id=checklist_id,
+                pos=pos,
+                due=due,
+                due_reminder=due_reminder,
+                member_id=member_id,
+            )
+        )
+    except (TrelloError, ValueError) as exc:
+        _fail(str(exc))
+
+
+@app.command("delete-checkitem")
+def delete_checkitem(
+    card_id: str = typer.Option(..., "--card-id", help="Card ID."),
+    checkitem_id: str = typer.Option(..., "--checkitem-id", help="Checklist item ID."),
+) -> None:
+    """Delete a checklist item from a card."""
+    try:
+        _print(_client().delete_checkitem(card_id=card_id, checkitem_id=checkitem_id))
     except TrelloError as exc:
         _fail(str(exc))
 
