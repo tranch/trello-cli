@@ -60,3 +60,10 @@ trello-cli update-checkitem --card-id <id> --checkitem-id <id> --state complete
 trello-cli delete-checkitem --card-id <id> --checkitem-id <id>
 trello-cli list-checklists --card-id <id>
 ```
+
+## Agent skill
+
+This repository includes `SKILL.md`, an agent-oriented guide for using and
+maintaining `trello-cli`. Codex can install it as a skill; other agents can read
+the same file as project-specific operating instructions.
+
