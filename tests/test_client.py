@@ -33,13 +33,44 @@ def test_get_card_by_short_id_resolves_within_board(monkeypatch: pytest.MonkeyPa
     def get(path: str, **params: object) -> object:
         calls.append((path, params))
         if path == "/boards/board-1/cards":
-            return [{"id": "card-401", "idShort": 401}, {"id": "card-413", "idShort": 413}]
+            return [
+                {"id": "card-401", "idShort": 401},
+                {"id": "card-413", "idShort": 413},
+            ]
         assert path == "/cards/card-413"
         return {"id": "card-413", "idShort": 413, "name": "Example"}
 
     monkeypatch.setattr(client, "_get", get)
 
     assert client.get_card_by_short_id("board-1", 413)["id"] == "card-413"
+    assert calls[0] == (
+        "/boards/board-1/cards",
+        {"filter": "open", "fields": "id,idShort"},
+    )
+
+
+def test_get_card_by_short_id_can_include_closed_cards(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = object.__new__(TrelloClient)
+    calls: list[tuple[str, dict]] = []
+
+    def get(path: str, **params: object) -> object:
+        calls.append((path, params))
+        if path == "/boards/board-1/cards":
+            return [
+                {"id": "card-401", "idShort": 401},
+                {"id": "card-413", "idShort": 413},
+            ]
+        assert path == "/cards/card-413"
+        return {"id": "card-413", "idShort": 413, "name": "Example"}
+
+    monkeypatch.setattr(client, "_get", get)
+
+    assert (
+        client.get_card_by_short_id("board-1", 413, card_filter="all")["id"]
+        == "card-413"
+    )
     assert calls[0] == (
         "/boards/board-1/cards",
         {"filter": "all", "fields": "id,idShort"},
@@ -52,6 +83,17 @@ def test_get_card_by_short_id_rejects_missing_card(monkeypatch: pytest.MonkeyPat
 
     with pytest.raises(TrelloError, match="413.*board-1"):
         client.get_card_by_short_id("board-1", 413)
+
+
+def test_get_card_by_short_id_rejects_invalid_filter() -> None:
+    client = object.__new__(TrelloClient)
+
+    with pytest.raises(ValueError, match="card_filter"):
+        client.get_card_by_short_id(
+            "board-1",
+            413,
+            card_filter="invalid",  # type: ignore[arg-type]
+        )
 
 
 def test_add_comment_posts_text_as_query_param(monkeypatch: pytest.MonkeyPatch) -> None:

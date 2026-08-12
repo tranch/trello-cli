@@ -1,11 +1,13 @@
 import os
-from typing import Any
+from typing import Any, Literal
 
 import requests
 
 from .config import load_config_file
 
 TRELLO_BASE = "https://api.trello.com/1"
+CardFilter = Literal["open", "closed", "all"]
+CARD_FILTERS: set[str] = {"open", "closed", "all"}
 
 
 class TrelloError(Exception):
@@ -102,11 +104,20 @@ class TrelloClient:
         )
         return self._fmt(card)
 
-    def get_card_by_short_id(self, board_id: str, short_id: int) -> dict:
+    def get_card_by_short_id(
+        self,
+        board_id: str,
+        short_id: int,
+        card_filter: CardFilter = "open",
+    ) -> dict:
         """Return a card by its board-scoped Trello ``idShort`` value."""
+        if card_filter not in CARD_FILTERS:
+            raise ValueError(
+                f"card_filter must be one of: {', '.join(sorted(CARD_FILTERS))}."
+            )
         cards = self._get(
             f"/boards/{board_id}/cards",
-            filter="all",
+            filter=card_filter,
             fields="id,idShort",
         )
         card_id = next(

@@ -43,12 +43,14 @@ trello-cli list-lists --board-id <id>
 trello-cli list-cards --list-id <id>
 trello-cli get-card --card-id <id>
 trello-cli get-card --short-id 413
+trello-cli get-card --short-id 413 --card-filter all
 trello-cli create-card --list-id <id> --name "Task title" --desc "Details"
 trello-cli update-card --card-id <id> --name "New title"
 trello-cli update-card --card-id <id> --due 2025-12-31T09:00:00.000Z
 trello-cli update-card --card-id <id> --closed
 trello-cli add-comment --card-id <id> --text "Comment text"
 trello-cli add-comment --short-id 413 --text "Comment text"
+trello-cli add-comment --short-id 413 --card-filter all --text "Comment text"
 trello-cli create-checklist --card-id <id> --name "Checklist"
 trello-cli create-checklist --card-id <id> --name "Todos" --items-file /path/to/items.md
 trello-cli get-checklist --checklist-id <id>

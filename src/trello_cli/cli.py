@@ -149,6 +149,11 @@ def get_card(
         min=1,
         help="Board-scoped card number shown in a Trello card URL.",
     ),
+    card_filter: str = typer.Option(
+        "open",
+        "--card-filter",
+        help="Cards to scan for --short-id: open, closed, or all.",
+    ),
 ) -> None:
     """Get full details of a single card."""
     try:
@@ -159,10 +164,16 @@ def get_card(
             _print(client.get_card(card_id=card_id))
         elif short_id:
             board_id = _resolve_board(None)
-            _print(client.get_card_by_short_id(board_id=board_id, short_id=short_id))
+            _print(
+                client.get_card_by_short_id(
+                    board_id=board_id,
+                    short_id=short_id,
+                    card_filter=card_filter,
+                )
+            )
         else:
             _fail("Specify either --card-id or --short-id.")
-    except TrelloError as exc:
+    except (TrelloError, ValueError) as exc:
         _fail(str(exc))
 
 
@@ -226,6 +237,11 @@ def add_comment(
         min=1,
         help="Board-scoped card number shown in a Trello card URL.",
     ),
+    card_filter: str = typer.Option(
+        "open",
+        "--card-filter",
+        help="Cards to scan for --short-id: open, closed, or all.",
+    ),
 ) -> None:
     """Add a comment to a card."""
     try:
@@ -237,6 +253,7 @@ def add_comment(
             card_id = client.get_card_by_short_id(
                 board_id=board_id,
                 short_id=short_id,
+                card_filter=card_filter,
             )["id"]
         if not card_id:
             _fail("Specify either --card-id or --short-id.")
