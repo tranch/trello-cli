@@ -39,6 +39,7 @@ trello-cli auth
 
 ```bash
 trello-cli list-boards
+trello-cli whoami
 trello-cli list-lists --board-id <id>
 trello-cli list-cards --list-id <id>
 trello-cli get-card --card-id <id>
@@ -68,4 +69,3 @@ trello-cli list-checklists --card-id <id>
 This repository includes `SKILL.md`, an agent-oriented guide for using and
 maintaining `trello-cli`. Codex can install it as a skill; other agents can read
 the same file as project-specific operating instructions.
-

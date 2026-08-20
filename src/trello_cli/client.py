@@ -85,6 +85,10 @@ class TrelloClient:
             for b in boards
         ]
 
+    def get_current_user(self) -> dict:
+        """Return the member represented by the configured API token."""
+        return self._get("/members/me")
+
     def list_lists(self, board_id: str) -> list[dict]:
         lists = self._get(f"/boards/{board_id}/lists", filter="open", fields="id,name,pos")
         return [{"id": item["id"], "name": item["name"], "pos": item["pos"]} for item in lists]

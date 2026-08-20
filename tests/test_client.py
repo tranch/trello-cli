@@ -26,6 +26,25 @@ def test_fmt_extracts_label_names() -> None:
     ]
 
 
+def test_get_current_user_uses_me_member_endpoint(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = object.__new__(TrelloClient)
+    calls: list[tuple[str, dict]] = []
+
+    def get(path: str, **params: object) -> object:
+        calls.append((path, params))
+        return {"id": "member-1", "fullName": "Example User"}
+
+    monkeypatch.setattr(client, "_get", get)
+
+    assert client.get_current_user() == {
+        "id": "member-1",
+        "fullName": "Example User",
+    }
+    assert calls == [("/members/me", {})]
+
+
 def test_get_card_by_short_id_resolves_within_board(monkeypatch: pytest.MonkeyPatch) -> None:
     client = object.__new__(TrelloClient)
     calls: list[tuple[str, dict]] = []

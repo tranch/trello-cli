@@ -118,6 +118,15 @@ def list_boards() -> None:
         _fail(str(exc))
 
 
+@app.command("whoami")
+def whoami() -> None:
+    """Get the Trello member represented by the configured API token."""
+    try:
+        _print(_client().get_current_user())
+    except TrelloError as exc:
+        _fail(str(exc))
+
+
 @app.command("list-lists")
 def list_lists(
     board_id: str | None = typer.Option(None, "--board-id", help="Trello board ID."),
