@@ -33,6 +33,16 @@ def _client() -> TrelloClient:
         _fail(str(exc))
 
 
+def _read_markdown_file(path: str) -> str:
+    """Read Markdown from a file, or stdin when path is ``-``."""
+    if path == "-":
+        return typer.get_text_stream("stdin").read()
+    file_path = Path(path)
+    if not file_path.is_file():
+        _fail(f"File not found: {path}")
+    return file_path.read_text(encoding="utf-8")
+
+
 def _resolve_board(board_id: str | None) -> str:
     """Return the explicit board_id or fall back to the configured default."""
     if board_id:
@@ -163,25 +173,34 @@ def get_card(
         "--card-filter",
         help="Cards to scan for --short-id: open, closed, or all.",
     ),
+    output_format: str = typer.Option(
+        "json",
+        "--format",
+        help="Output format: json (default) or markdown (description only).",
+    ),
 ) -> None:
     """Get full details of a single card."""
     try:
         client = _client()
+        if output_format not in {"json", "markdown"}:
+            _fail("format must be either json or markdown.")
         if card_id and short_id:
             _fail("Specify either --card-id or --short-id, not both.")
         if card_id:
-            _print(client.get_card(card_id=card_id))
+            card = client.get_card(card_id=card_id)
         elif short_id:
             board_id = _resolve_board(None)
-            _print(
-                client.get_card_by_short_id(
-                    board_id=board_id,
-                    short_id=short_id,
-                    card_filter=card_filter,
-                )
+            card = client.get_card_by_short_id(
+                board_id=board_id,
+                short_id=short_id,
+                card_filter=card_filter,
             )
         else:
             _fail("Specify either --card-id or --short-id.")
+        if output_format == "markdown":
+            typer.echo(card.get("desc", ""), nl=bool(card.get("desc", "")))
+        else:
+            _print(card)
     except (TrelloError, ValueError) as exc:
         _fail(str(exc))
 
@@ -191,6 +210,11 @@ def create_card(
     list_id: str = typer.Option(..., "--list-id", help="Target list ID."),
     name: str = typer.Option(..., "--name", help="Card title."),
     desc: str = typer.Option("", "--desc", help="Card description (Markdown supported)."),
+    text_file: str | None = typer.Option(
+        None,
+        "--text-file",
+        help="Read the Markdown description from a UTF-8 file, or '-' for stdin.",
+    ),
     due: str | None = typer.Option(
         None,
         "--due",
@@ -199,7 +223,10 @@ def create_card(
 ) -> None:
     """Create a new card in the specified list."""
     try:
-        _print(_client().create_card(list_id=list_id, name=name, desc=desc, due=due))
+        if text_file is not None and desc:
+            _fail("Specify either --desc or --text-file, not both.")
+        description = _read_markdown_file(text_file) if text_file is not None else desc
+        _print(_client().create_card(list_id=list_id, name=name, desc=description, due=due))
     except TrelloError as exc:
         _fail(str(exc))
 
@@ -209,6 +236,11 @@ def update_card(
     card_id: str = typer.Option(..., "--card-id", help="Card ID to update."),
     name: str | None = typer.Option(None, "--name", help="New card title."),
     desc: str | None = typer.Option(None, "--desc", help="New card description."),
+    text_file: str | None = typer.Option(
+        None,
+        "--text-file",
+        help="Read the new Markdown description from a UTF-8 file, or '-' for stdin.",
+    ),
     due: str | None = typer.Option(
         None,
         "--due",
@@ -223,11 +255,14 @@ def update_card(
     resolved_due = None if due == "null" else due
     resolved_closed: bool | None = closed if closed else None
     try:
+        if text_file is not None and desc is not None:
+            _fail("Specify either --desc or --text-file, not both.")
+        description = _read_markdown_file(text_file) if text_file is not None else desc
         _print(
             _client().update_card(
                 card_id=card_id,
                 name=name,
-                desc=desc,
+                desc=description,
                 due=resolved_due,
                 closed=resolved_closed,
             )
@@ -238,7 +273,12 @@ def update_card(
 
 @app.command("add-comment")
 def add_comment(
-    text: str = typer.Option(..., "--text", help="Comment text (Markdown supported)."),
+    text: str | None = typer.Option(None, "--text", help="Comment text (Markdown supported)."),
+    text_file: str | None = typer.Option(
+        None,
+        "--text-file",
+        help="Read Markdown comment text from a UTF-8 file, or '-' for stdin.",
+    ),
     card_id: str | None = typer.Option(None, "--card-id", help="Trello card ID."),
     short_id: int | None = typer.Option(
         None,
@@ -254,6 +294,11 @@ def add_comment(
 ) -> None:
     """Add a comment to a card."""
     try:
+        if text_file is not None and text is not None:
+            _fail("Specify either --text or --text-file, not both.")
+        if text_file is None and text is None:
+            _fail("Specify either --text or --text-file.")
+        comment_text = _read_markdown_file(text_file) if text_file is not None else text
         client = _client()
         if card_id and short_id:
             _fail("Specify either --card-id or --short-id, not both.")
@@ -266,7 +311,7 @@ def add_comment(
             )["id"]
         if not card_id:
             _fail("Specify either --card-id or --short-id.")
-        _print(client.add_comment(card_id=card_id, text=text))
+        _print(client.add_comment(card_id=card_id, text=comment_text))
     except (TrelloError, ValueError) as exc:
         _fail(str(exc))
 

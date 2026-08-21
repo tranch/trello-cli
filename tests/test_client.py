@@ -1,6 +1,48 @@
 import pytest
 
 from trello_cli.client import TrelloClient, TrelloError
+from trello_cli.markdown import normalize_markdown
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        (r"## Title\n\n- item", "## Title\n\n- item"),
+        ("## Title\n\n- item", "## Title\n\n- item"),
+        (r"Keep \\n literal", r"Keep \\n literal"),
+        (r"a\r\nb", "a\nb"),
+    ],
+)
+def test_normalize_markdown(source: str, expected: str) -> None:
+    assert normalize_markdown(source) == expected
+
+
+def test_create_card_normalizes_description(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = object.__new__(TrelloClient)
+    calls: list[tuple[str, dict]] = []
+
+    def post(path: str, **data: object) -> object:
+        calls.append((path, data))
+        return {"id": "card-1"}
+
+    monkeypatch.setattr(client, "_post", post)
+    client.create_card("list-1", "Title", r"## Heading\n\nBody")
+
+    assert calls == [("/cards", {"idList": "list-1", "name": "Title", "desc": "## Heading\n\nBody"})]
+
+
+def test_update_card_and_comment_normalize_markdown(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = object.__new__(TrelloClient)
+    puts: list[dict] = []
+    comments: list[dict] = []
+    monkeypatch.setattr(client, "_put", lambda _path, **data: puts.append(data) or {})
+    monkeypatch.setattr(client, "_post_params", lambda _path, **data: comments.append(data) or {})
+
+    client.update_card("card-1", desc=r"a\nb")
+    client.add_comment("card-1", r"- one\n- two")
+
+    assert puts == [{"desc": "a\nb"}]
+    assert comments == [{"text": "- one\n- two"}]
 
 
 def test_fmt_handles_missing_optional_fields() -> None:

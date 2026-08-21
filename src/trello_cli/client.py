@@ -4,6 +4,7 @@ from typing import Any, Literal
 import requests
 
 from .config import load_config_file
+from .markdown import normalize_markdown
 
 TRELLO_BASE = "https://api.trello.com/1"
 CardFilter = Literal["open", "closed", "all"]
@@ -141,7 +142,11 @@ class TrelloClient:
         desc: str = "",
         due: str | None = None,
     ) -> dict:
-        payload: dict[str, Any] = {"idList": list_id, "name": name, "desc": desc}
+        payload: dict[str, Any] = {
+            "idList": list_id,
+            "name": name,
+            "desc": normalize_markdown(desc),
+        }
         if due:
             payload["due"] = due
         return self._fmt(self._post("/cards", **payload))
@@ -158,7 +163,7 @@ class TrelloClient:
         if name is not None:
             payload["name"] = name
         if desc is not None:
-            payload["desc"] = desc
+            payload["desc"] = normalize_markdown(desc)
         if due is not None:
             payload["due"] = due
         if closed is not None:
@@ -170,7 +175,10 @@ class TrelloClient:
     def add_comment(self, card_id: str, text: str) -> dict:
         if not text.strip():
             raise ValueError("Comment text must not be empty.")
-        return self._post_params(f"/cards/{card_id}/actions/comments", text=text)
+        return self._post_params(
+            f"/cards/{card_id}/actions/comments",
+            text=normalize_markdown(text),
+        )
 
     def create_checklist(self, card_id: str, name: str) -> dict:
         return self._post(f"/cards/{card_id}/checklists", name=name)
