@@ -69,6 +69,12 @@ trello-cli add-comment --short-id <board-scoped-number> --text "Markdown comment
 
 Use `--short-id` only when `default_board` is configured. Trello short IDs are board-scoped, not globally unique.
 
+## Card Description and Comment Style
+
+Keep card descriptions and comments short and easy to scan. Trello cards are intentionally small and lightweight, so do not use H1-H5 headings for long-form exposition. When structure is needed, prefer concise paragraphs, lists, or bold text instead of heading-heavy formatting.
+
+Write in the second person and state the practical purpose directly: give the reader a task to do or record a defect to address. Avoid excessive polishing, formal rhetoric, or unnecessary background. Prefer wording such as “Please update the retry handling” or “You can reproduce this by…” over elaborate narrative prose.
+
 ## Checklists
 
 Create a checklist directly:
@@ -132,4 +138,3 @@ If the package is not installed in the current environment, install it first wit
 ```bash
 pip install -e ".[dev]"
 ```
-
