@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=68", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "trello-cli"
-version = "0.1.3"
+name = "trello-board-cli"
+dynamic = ["version"]
 authors = [
   { name = "tranch", email = "tranch.xiao@gmail.com" },
 ]
@@ -46,6 +46,10 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.setuptools_scm]
+version_scheme = "guess-next-dev"
+local_scheme = "no-local-version"
 
 [project.urls]
 Homepage = "https://github.com/tranch/trello-cli"

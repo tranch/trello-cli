@@ -5,6 +5,15 @@ LLM-friendly command-line interface for Trello.
 All commands write JSON to stdout. Errors are written to stderr and exit with
 code 1.
 
+## Install from PyPI
+
+The PyPI distribution is named `trello-board-cli` because the `trello-cli`
+distribution name is already taken. The installed command remains `trello-cli`:
+
+```bash
+pipx install trello-board-cli
+```
+
 ## Install for local development
 
 ```bash
