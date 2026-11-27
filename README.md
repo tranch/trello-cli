@@ -55,6 +55,7 @@ trello-cli add-comment --card-id <id> --text "Comment text"
 trello-cli add-comment --card-id <id> --text-file comment.md
 trello-cli add-comment --short-id 413 --text "Comment text"
 trello-cli add-comment --short-id 413 --card-filter all --text "Comment text"
+trello-cli list-comments --card-id <id>
 trello-cli create-checklist --card-id <id> --name "Checklist"
 trello-cli create-checklist --card-id <id> --name "Todos" --items-file /path/to/items.md
 trello-cli get-checklist --checklist-id <id>

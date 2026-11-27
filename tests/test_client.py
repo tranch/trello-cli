@@ -187,6 +187,49 @@ def test_add_comment_rejects_empty_text() -> None:
         client.add_comment("card-1", "  ")
 
 
+def test_list_comments_filters_comment_actions_and_formats_results(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    client = object.__new__(TrelloClient)
+    calls: list[tuple[str, dict]] = []
+
+    def get(path: str, **params: object) -> object:
+        calls.append((path, params))
+        return [
+            {
+                "id": "action-1",
+                "date": "2026-08-28T09:00:00.000Z",
+                "data": {"text": "Looks good"},
+                "memberCreator": {
+                    "id": "member-1",
+                    "username": "tranch",
+                    "fullName": "Example User",
+                },
+            }
+        ]
+
+    monkeypatch.setattr(client, "_get", get)
+
+    assert client.list_comments("card-1") == [
+        {
+            "id": "action-1",
+            "date": "2026-08-28T09:00:00.000Z",
+            "text": "Looks good",
+            "member_creator": {
+                "id": "member-1",
+                "username": "tranch",
+                "full_name": "Example User",
+            },
+        }
+    ]
+    assert calls == [
+        (
+            "/cards/card-1/actions",
+            {"filter": "commentCard", "fields": "id,date,data,memberCreator"},
+        )
+    ]
+
+
 def test_update_checklist_sends_supported_fields(monkeypatch: pytest.MonkeyPatch) -> None:
     client = object.__new__(TrelloClient)
     calls: list[tuple[str, dict]] = []

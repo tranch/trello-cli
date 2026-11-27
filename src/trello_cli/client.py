@@ -180,6 +180,15 @@ class TrelloClient:
             text=normalize_markdown(text),
         )
 
+    def list_comments(self, card_id: str) -> list[dict]:
+        """Return comments on a card in Trello's action order."""
+        actions = self._get(
+            f"/cards/{card_id}/actions",
+            filter="commentCard",
+            fields="id,date,data,memberCreator",
+        )
+        return [self._fmt_comment(action) for action in actions]
+
     def create_checklist(self, card_id: str, name: str) -> dict:
         return self._post(f"/cards/{card_id}/checklists", name=name)
 
@@ -305,4 +314,19 @@ class TrelloClient:
             "board_id": card.get("idBoard"),
             "closed": card.get("closed", False),
             "labels": [label.get("name") for label in card.get("labels", [])],
+        }
+
+    @staticmethod
+    def _fmt_comment(action: dict) -> dict:
+        member = action.get("memberCreator") or {}
+        data = action.get("data") or {}
+        return {
+            "id": action.get("id"),
+            "date": action.get("date"),
+            "text": data.get("text", ""),
+            "member_creator": {
+                "id": member.get("id"),
+                "username": member.get("username"),
+                "full_name": member.get("fullName"),
+            },
         }

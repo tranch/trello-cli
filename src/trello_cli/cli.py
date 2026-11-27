@@ -316,6 +316,17 @@ def add_comment(
         _fail(str(exc))
 
 
+@app.command("list-comments")
+def list_comments(
+    card_id: str = typer.Option(..., "--card-id", help="Trello card ID."),
+) -> None:
+    """List all comments on a card."""
+    try:
+        _print(_client().list_comments(card_id=card_id))
+    except TrelloError as exc:
+        _fail(str(exc))
+
+
 @app.command("create-checklist")
 def create_checklist(
     card_id: str = typer.Option(..., "--card-id", help="Card ID to add the checklist to."),
